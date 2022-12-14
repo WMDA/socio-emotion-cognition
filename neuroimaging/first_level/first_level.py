@@ -10,6 +10,9 @@ import os  # system functions
 from nipype.interfaces.nipy.model import FitGLM, EstimateContrast
 from nipype.interfaces.nipy.preprocess import ComputeMask
 
+from nipype.interfaces.base import Bunch
+from copy import deepcopy
+
 mlab.MatlabCommand.set_default_matlab_cmd("matlab -nodesktop -nosplash")
 
 data_dir = os.path.abspath('')
@@ -24,8 +27,7 @@ infosource = pe.Node(interface=util.IdentityInterface(fields=['subject_id']), na
 infosource.iterables = ('subject_id', subject_list)
 
 def subjectinfo(subject_id):
-	from nipype.interfaces.base import Bunch
-    from copy import deepcopy
+
     print(f'subject ID: {subject_id}\n')
     names = ['happy', 'partial-happy' , 'neutral']
     onsets =[list(range(15,240,60), list(range(45, 240, 60)))

@@ -2,7 +2,7 @@ import argparse
 import os
 import pandas as pd
 
-def options():
+def options() -> dict:
     flags = argparse.ArgumentParser()
     flags.add_argument('-d', '--dir', dest='dir', help='directory where task files are saved')
     flags.add_argument('-s', '--save', dest='save', help='BIDS directory to save tsvs to') 
@@ -10,16 +10,16 @@ def options():
     arg = vars(flags.parse_args())
     return arg
 
-def get_files(directory:str):
+def get_files(directory:str) -> list:
 	files = os.listdir(directory)
 	return files
 
-def duration(df:object):
+def duration(df:pd.DataFrame) -> pd.Series:
     duration =  df['TimeAtStartOfTrial'].shift(periods= -1) - df['TimeAtStartOfTrial']
     duration = duration.fillna(duration.mean()).rename('duration')
     return duration
 
-def stimuli(col, stim):
+def stimuli(col:str, stim:str) -> str:
     if '4' in col:
         return f'{stim}'
     elif '2' in col:
@@ -30,7 +30,7 @@ def stimuli(col, stim):
         return 'Blank'
 
 
-def create_tsv(csv:str, stim:str):
+def create_tsv(csv:str, stim:str) -> pd.DataFrame:
     df = pd.read_csv(csv)
     dur = duration(df)
     onset = df['TimeAtStartOfTrial'].rename('onset')
@@ -43,6 +43,7 @@ def create_tsv(csv:str, stim:str):
 if __name__ == '__main__':
     flags = options()
     files = get_files(flags['dir'])
+    
 
     for file in files:
         csv = flags['dir'] + file
