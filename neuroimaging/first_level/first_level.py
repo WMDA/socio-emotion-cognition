@@ -6,7 +6,7 @@ import nipype.pipeline.engine as pe  # pypeline engine
 import nipype.algorithms.rapidart as ra  # artifact detection
 import nipype.algorithms.modelgen as model  # model specification
 import os  # system functions
-
+from nipype.due import due, Doi, BibTeX
 from nipype.interfaces.nipy.model import FitGLM, EstimateContrast
 from nipype.interfaces.nipy.preprocess import ComputeMask
 
@@ -30,5 +30,4 @@ def subjectinfo(subject_id):
 
     print(f'subject ID: {subject_id}\n')
     names = ['happy', 'partial-happy' , 'neutral']
-    onsets =[list(range(15,240,60), list(range(45, 240, 60)))
-    output = Bunch(condition=names, onsets=deepcopy(onsets), durations=[[15] for s in names], amplitudes=None, tmod=None, pmod=None, regressor_names=None)
+    onsets =list(range(15,240,60), list(range(45, 240, 60)))
