@@ -32,5 +32,5 @@ infosource.iterables = ('subject_id', subject_list)
 def subjectinfo(subject_id):
 
     print(f'subject ID: {subject_id}\n')
-    #names = ['happy', 'partial-happy', 'neutral']
-    #onsets = list(range(15, 240, 60), list(range(45, 240, 60)))
+    # names = ['happy', 'partial-happy', 'neutral']
+    # onsets = list(range(15, 240, 60), list(range(45, 240, 60)))

@@ -133,7 +133,11 @@ def file_path(time_point: str, csv_location: str) -> dict:
     if '2' in time_point:
         prefix: str = 'B'
 
-    subject: str = prefix + 'sub-' + number
+    subject: str = 'sub-' + prefix + number
+
+    if 'B2024' in subject: # An exception in naming occurs for one participant
+        subject = 'sub-B2024B'
+
     file_info = {
         'subject': subject,
         'path': f'{bids_directory}/{subject}/func'
