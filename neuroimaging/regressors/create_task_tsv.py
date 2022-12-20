@@ -1,6 +1,8 @@
 import argparse
 import os
 import pandas as pd
+import re
+from decouple import config
 
 
 def options() -> dict:
@@ -22,6 +24,8 @@ def options() -> dict:
                        help='BIDS directory to save tsvs to')
     flags.add_argument('--stim', dest='stim',
                        help='Defines stimulus name i.e happy of fear')
+    flags.add_argument('--time', dest='time',
+                       help='Defines time point to get data from')
     return vars(flags.parse_args())
 
 
@@ -93,6 +97,51 @@ def create_tsv(csv: str, stim: str) -> pd.DataFrame:
     return tsv
 
 
+def path_to_data(time_point: str) -> str:
+    '''
+    Function to get path to raw data
+
+    Parameters
+    ----------
+    time_point: str of time point number
+
+    Returns
+    -------
+    str: path to bids_directory
+    '''
+    raw_data: str = config('raw_data')
+    return os.path.join(raw_data, f'bids_t{time_point}')
+
+
+def file_path(time_point: str, csv_location: str) -> dict:
+    '''
+    Function to get file path to save data to
+
+    Parameters
+    ----------
+    time_point: str of which time point to save data to
+    csv_location: str of csv file location
+
+    Returns
+    -------
+    str of file path
+    '''
+    bids_directory: str = path_to_data(time_point)
+    number: str = ''.join(re.findall(r"[.\d*?]\d", csv_location))
+    if '1' in time_point:
+        prefix: str = 'G'
+    elif '2' in time_point:
+        prefix: str = 'B'
+
+    subject: str = prefix + number
+    file_info = {
+        'subject': subject,
+        'path': f'{bids_directory}/{subject}/func'
+    }
+
+    return file_info
+
+
 if __name__ == '__main__':
     flags: dict = options()
     files: list = os.listdir(flags['dir'])
@@ -102,7 +151,9 @@ if __name__ == '__main__':
 
         try:
             tsv: pd.DataFrame = create_tsv(csv_location, flags['stim'])
+            bids_file_path: dict = file_path(flags['time'], csv_location)
+            tsv.to_csv(
+                f"{bids_file_path['path']}/{bids_file_path['subject']}_task-{flags['stim']}_events.tsv")
 
-            print(csv_location.rstrip('.csv'))
         except Exception as e:
             print(e)
