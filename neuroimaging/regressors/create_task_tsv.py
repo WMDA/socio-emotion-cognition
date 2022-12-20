@@ -130,10 +130,10 @@ def file_path(time_point: str, csv_location: str) -> dict:
     number: str = ''.join(re.findall(r"[.\d*?]\d", csv_location))
     if '1' in time_point:
         prefix: str = 'G'
-    elif '2' in time_point:
+    if '2' in time_point:
         prefix: str = 'B'
 
-    subject: str = prefix + number
+    subject: str = prefix + 'sub-' + number
     file_info = {
         'subject': subject,
         'path': f'{bids_directory}/{subject}/func'
