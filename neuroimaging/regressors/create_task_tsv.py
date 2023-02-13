@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import re
 from decouple import config
-
+import sys
 
 def options() -> dict:
     '''
@@ -20,12 +20,12 @@ def options() -> dict:
     flags = argparse.ArgumentParser()
     flags.add_argument('-d', '--dir', dest='dir',
                        help='directory where task files are saved')
-    flags.add_argument('-s', '--save', dest='save',
-                       help='BIDS directory to save tsvs to')
     flags.add_argument('--stim', dest='stim',
                        help='Defines stimulus name i.e happy of fear')
     flags.add_argument('--time', dest='time',
                        help='Defines time point to get data from')
+    flags.add_argument('--subject', dest='subject',
+                       help='File path for individual subject instead of a group of individuals')
     return vars(flags.parse_args())
 
 
@@ -59,7 +59,7 @@ def stimuli(stimuls_shown: str, stim: str) -> str:
 
     Returns
     -------
-    returns str of stimulus name
+    str of stimulus name
     '''
     if '4' in stimuls_shown:
         return f'{stim}'
@@ -107,7 +107,7 @@ def path_to_data(time_point: str) -> str:
 
     Returns
     -------
-    str: path to bids_directory
+    str of path to bids_directory
     '''
     raw_data: str = config('raw_data')
     return os.path.join(raw_data, f'bids_t{time_point}')
@@ -124,7 +124,7 @@ def file_path(time_point: str, csv_location: str) -> dict:
 
     Returns
     -------
-    str of file path
+    file_info: dict of file path and subject info.
     '''
     bids_directory: str = path_to_data(time_point)
     number: str = ''.join(re.findall(r"[.\d*?]\d", csv_location))
@@ -135,8 +135,8 @@ def file_path(time_point: str, csv_location: str) -> dict:
 
     subject: str = 'sub-' + prefix + number
 
-    if 'B2024' in subject: # An exception in naming occurs for one participant
-        subject = 'sub-B2024B'
+    if 'B2024' in subject:  # An exception in naming occurs for one participant
+        subject: str = 'sub-B2024B'
 
     file_info = {
         'subject': subject,
@@ -146,18 +146,56 @@ def file_path(time_point: str, csv_location: str) -> dict:
     return file_info
 
 
+def analyse_subject(flags: dict, file: str ='None') -> None:
+    '''
+    Function to analyse subjects. Saves tsv file to correct
+    bids directory.
+
+    Parameters
+    ----------
+    flags: dict of arguments.
+    file:  str of file name. Used with -d/--directory flag 
+           otherwise set None.
+
+    Returns
+    -------
+    None
+    '''
+    if '1' in flags['time']:
+        suffix: str = 'sub-G'
+    else:
+        suffix: str = 'sub-B' 
+
+    if flags['subject'] != None:
+        csv_location: str = flags['subject'] 
+        subject: str = suffix + os.path.basename(flags['subject']).split('_')[2]
+    else:
+        csv_location: str = flags['dir'] + file
+        subject: str = suffix + file.split('_')[2]
+    
+    print(f"\nAnalysing subject {subject}\n")
+    
+    try:  
+        bids_file_path: dict = file_path(flags['time'], csv_location)
+        tsv: pd.DataFrame = create_tsv(csv_location, flags['stim'])
+        tsv.to_csv(
+                    f"{bids_file_path['path']}/{bids_file_path['subject']}_task-{flags['stim']}_events.tsv"
+                  )
+
+    except Exception as e:
+        print(f'\nUnable to analyse {subject} due to {e}\n')
+
+
 if __name__ == '__main__':
     flags: dict = options()
+
+    if flags['subject'] != None:
+        analyse_subject(flags)
+        print('Finished')
+        sys.exit(0)
+    
     files: list = os.listdir(flags['dir'])
-
     for file in files:
-        csv_location: str = flags['dir'] + file
-
-        try:
-            tsv: pd.DataFrame = create_tsv(csv_location, flags['stim'])
-            bids_file_path: dict = file_path(flags['time'], csv_location)
-            tsv.to_csv(
-                f"{bids_file_path['path']}/{bids_file_path['subject']}_task-{flags['stim']}_events.tsv")
-
-        except Exception as e:
-            print(e)
+        analyse_subject(flags, file=file)
+    print('Finished')
+    sys.exit(0)

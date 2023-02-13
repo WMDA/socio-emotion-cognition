@@ -1,0 +1,8 @@
+#! /bin/bash
+
+file="/data/project/BEACONB/task_fmri/socio-emotion-cognition/.participants_t1"
+
+while IFS='G' read -ra line
+do
+cp "/data/project/BEACON/CNSCNSD/TASK/FearFaces/Beacon_FearFaces_${line[1]}_1.csv" "/data/project/BEACONB/CNSCNSD/task_files/fear_t1/Beacon_FearFaces_${line[1]}_1.csv"
+done < $file

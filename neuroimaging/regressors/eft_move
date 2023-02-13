@@ -1,0 +1,8 @@
+#! /bin/bash
+
+file="/data/project/BEACONB/task_fmri/socio-emotion-cognition/.participants_t1"
+
+while IFS= read -ra line
+do
+cp "/data/project/BEACON/eft/eft_regressors/${line}_task-eft_events.tsv" "/data/project/BEACONB/CNSCNSD/bids_t1/${line}/func/${line}_task-eft_events.tsv"
+done < $file
