@@ -1,8 +1,8 @@
-# User defined
+# User defined. Not uploading participant information or vscode folder
 .participan*
 .1st*
 .vscode
-*sh
+.repeat_fmri
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -130,7 +130,7 @@ info_source.iterables = [('subject_id', subject_to_analyse)]
 
 #  Creates the output folders
 data_sink = pe.Node(DataSink(base_directory=base_dir,
-                             container='results'),
+                             container=base_dir),
                     name='datasink')
 substitutions = [('_subject_id_', '')]
 data_sink.inputs.substitutions = substitutions
