@@ -34,26 +34,48 @@ def subjectinfo(subject_id: str) -> list:
     import pandas as pd
     from nipype.interfaces.base import Bunch
     
-    experiment_dir = config('happy')
+    experiment_dir = config('eft')
     dfs_events = os.path.join(config('raw_data'), 'bids_t1')
-    events_df = pd.read_csv(dfs_events + f'/{subject_id}/func/{subject_id}_task-happy_events.tsv')
+    events_df = pd.read_csv(dfs_events + f'/{subject_id}/func/{subject_id}_task-eft_events.tsv', sep='\s')
     confounds_df = pd.read_csv(os.path.join(experiment_dir,'preprocessed_t1', subject_id) +
-                        f'/func/{subject_id}_task-happy_desc-confounds_timeseries.tsv', sep='\t')
-
-    regres = {
-        'trans_x': confounds_df['trans_x'],
-        'trans_y': confounds_df['trans_y'],
-        'trans_z': confounds_df['trans_z'],
-        'rot_x': confounds_df['rot_x'],
-        'rot_y': confounds_df['rot_y'],
-        'rot_z': confounds_df['rot_z']
-    }
+                        f'/func/{subject_id}_task-eft_desc-confounds_timeseries.tsv', sep='\t').fillna(0)
+    
+    # Data driven PCA approach. Selects the components to exaplain the minimum cumulative fraction of variance
+    regres = confounds_df.filter(regex=("a_comp_cor.*")).to_dict(orient='series')
+    
+    # Then add in the movement regressors
+    regres.update([
+        # These are highly correlated with everything else so are removed.
+        #('trans_x', confounds_df['trans_x']),
+        #('trans_y', confounds_df['trans_y']),
+        #('trans_z', confounds_df['trans_z']),
+        #('rot_x', confounds_df['rot_x']),
+        #('rot_y', confounds_df['rot_y']),
+        #('rot_z', confounds_df['rot_z']),                   
+        ('trans_x_derivative1', confounds_df['trans_x_derivative1']),
+        ('trans_y_derivative1', confounds_df['trans_y_derivative1']),
+        ('trans_z_derivative1', confounds_df['trans_z_derivative1']),
+        ('rot_x_derivative1', confounds_df['rot_x_derivative1']),
+        ('rot_y_derivative1', confounds_df['rot_y_derivative1']),
+        ('rot_z_derivative1', confounds_df['rot_z_derivative1']), 
+        ('trans_x_power2', confounds_df['trans_x_power2']),
+        ('trans_y_power2', confounds_df['trans_y_power2']),
+        ('trans_z_power2', confounds_df['trans_z_power2']),
+        ('rot_x_power2', confounds_df['rot_x_power2']),
+        ('rot_y_power2', confounds_df['rot_y_power2']),
+        ('rot_z_power2', confounds_df['rot_z_power2']), 
+        ('trans_x_derivative1_power2', confounds_df['trans_x_derivative1_power2']),
+        ('trans_y_derivative1_power2', confounds_df['trans_y_derivative1_power2']),
+        ('trans_z_derivative1_power2', confounds_df['trans_z_derivative1_power2']),
+        ('rot_x_derivative1_power2', confounds_df['rot_x_derivative1_power2']),
+        ('rot_y_derivative1_power2', confounds_df['rot_y_derivative1_power2']),
+        ('rot_z_derivative1_power2', confounds_df['rot_z_derivative1_power2']),
+        ])
 
     events = {
-        'blank': events_df[events_df['trial_type'].str.contains('Blank')],
-        'neutral': events_df[events_df['trial_type'].str.contains('Neutral')],
-        'partially_happy': events_df[events_df['trial_type'].str.contains('Partially_happy')],
-        'happy': events_df[events_df['trial_type'] == 'happy']
+        'Baseline': events_df[events_df['Condition'].str.contains('Baseline')],
+        'ComplexFigures': events_df[events_df['Condition'].str.contains('ComplexFigures')],
+        'SimpleFigures': events_df[events_df['Condition'].str.contains('SimpleFigures')],
     }
         
     subject_info =  [
@@ -67,7 +89,7 @@ def subjectinfo(subject_id: str) -> list:
     return subject_info
 
 #  Global parameters lots of these are repeated due to nipype quirks
-experiment_dir = config('happy')
+experiment_dir = config('eft')
 subject_to_analyse = [sys.argv[1]] 
 layout = BIDSLayout(os.path.join(experiment_dir,'preprocessed_t1', subject_to_analyse[0]), validate=False)
 img_file = layout.get(subject=subject_to_analyse[0].lstrip('sub-'), datatype='func', 
@@ -76,8 +98,10 @@ img_file_path = os.path.join(layout.root,'func', img_file.filename)
 base_dir = os.path.join(experiment_dir, '1stlevel')
 
 #  Building the contrasts
-contrasts = [['linear_contrast', 'T', ['blank', 'neutral', 'partially_happy', 'happy'], 
-             [0, -1, 0, 1, 0, 0, 0, 0, 0, 0]]]
+contrasts = [
+    ['complex-simple', 'T', ['Baseline', 'ComplexFigures', 'SimpleFigures'], [0, 1, -1]],
+    ['simple-complex', 'T', ['Baseline', 'ComplexFigures', 'SimpleFigures'], [0, -1, 1]]       
+    ]
 
 #  Building the SPM workflow
 level_1_analysis = pe.Workflow(name='analysis')  

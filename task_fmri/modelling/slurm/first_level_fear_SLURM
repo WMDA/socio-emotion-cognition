@@ -1,7 +1,7 @@
 #! /bin/bash
 
 #SBATCH --job-name=first_level_modelling
-#SBATCH --output=/data/project/BEACONB/logs/%j.out
+#SBATCH --output=/data/project/BEACONB/logs/%j_fear_first_level_t1.out
 #SBATCH --export=none
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=3G
@@ -21,5 +21,5 @@ PARTICIPANT="`awk FNR==$SLURM_ARRAY_TASK_ID $INDEX`"
 echo "Running on $HOSTNAME"
 echo $PARTICIPANT
 conda activate neuroimaging
-python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/neuroimaging/first_level/first_level.py $PARTICIPANT
+python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/modelling/first_level_fear.py $PARTICIPANT
 echo "Complete"

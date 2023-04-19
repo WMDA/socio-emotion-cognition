@@ -1,10 +1,10 @@
 #! /bin/bash
 
-#SBATCH --job-name=randomise
+#SBATCH --job-name=palm
 #SBATCH --output=/data/project/BEACONB/logs/%j.out
 #SBATCH --export=none
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=10G
+#SBATCH --mem=25G
 
 source /software/system/modules/latest/init/bash
 module use /software/system/modules/NaN/generic
@@ -13,8 +13,9 @@ module load nan
 
 module load fsl/6.0.5.2
 module load miniconda/3
+module load palm/20220826
 
 
 echo "Running on $HOSTNAME"
 conda activate neuroimaging
-python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/neuroimaging/modelling/second_level.py
+python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/modelling/second_level_palm.py -t happy -p 100

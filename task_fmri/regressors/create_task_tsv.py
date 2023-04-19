@@ -21,11 +21,11 @@ def options() -> dict:
     flags.add_argument('-d', '--dir', dest='dir',
                        help='directory where task files are saved')
     flags.add_argument('--stim', dest='stim',
-                       help='Defines stimulus name i.e happy of fear')
+                       help='Defines stimulus name, happy or fear')
     flags.add_argument('--time', dest='time',
                        help='Defines time point to get data from')
     flags.add_argument('--subject', dest='subject',
-                       help='File path for individual subject instead of a group of individuals')
+                       help='Absoulte file path for individual subjects csv instead of a group of individuals')
     return vars(flags.parse_args())
 
 

@@ -1,0 +1,13 @@
+#! /bin/bash
+
+root="/data/project/BEACONB/task_fmri/eft/1stlevel/T1"
+cd $root
+folders=*
+
+for folder in $folders;
+do 
+cd $folder
+betas=beta_*
+gzip $betas
+cd $root
+done
