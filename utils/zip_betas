@@ -1,6 +1,6 @@
 #! /bin/bash
 
-root="/data/project/BEACONB/task_fmri/eft/1stlevel/T1"
+root=""
 cd $root
 folders=*
 

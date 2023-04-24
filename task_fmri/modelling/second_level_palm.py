@@ -7,7 +7,6 @@ import argparse
 import glob
 import re
 import nilearn.image as img
-from  nipype.interfaces import fsl
 
 def options() -> dict:
 
@@ -114,7 +113,8 @@ def create_design_matrix(path: str) -> dict:
     design_matrix = pd.concat([long_df[['group', 'time']], 
                                interaction_effect.rename('interaction'), 
                                random_effects], axis=1) 
-
+    for column in design_matrix[['group', 'time', 'interaction']]:
+        design_matrix[column] = design_matrix[column].apply(lambda x: -1 if x == 0 else 1)
     
     return  {
         'scans': scans,
@@ -129,8 +129,7 @@ def get_paths(task: str) -> dict:
     Parameters
     ---------
     task: str
-        Name of task. Must be
-        happy, fear or eft 
+        Name of task. Must be happy, fear or eft. 
 
     Returns
     -------
@@ -168,26 +167,17 @@ def create_design_files(design_matrix: pd.DataFrame, second_level_directory: str
     '''
 
     t_contrasts = np.vstack((
-                        np.hstack(([2, -1, -1], np.zeros(design_matrix.shape[1] -3))), # group
-                        np.hstack(([-1, 2, -1], np.zeros(design_matrix.shape[1] -3))), # time
-                        np.hstack(([-1, -1, 2], np.zeros(design_matrix.shape[1] -3))) # interaction
+                        np.hstack(([1, 0, 0], np.zeros(design_matrix.shape[1] -3))), # group
+                        np.hstack(([0, 1, 0], np.zeros(design_matrix.shape[1] -3))), # time
+                        np.hstack(([0, 0, 1], np.zeros(design_matrix.shape[1] -3))) # interaction
     ))
     t_contrasts = pd.DataFrame(t_contrasts)
     
-    '''
-    Possible block combinations
-    
-    [-1 if re.search(r'G1|B1', participant) else -2 for participant in scans],
-    [1 if re.search(r'G1|B1', participant) else 2 for participant in scans]
-    sorted([block for block in range(1, design_matrix.shape[1] -3)] + [block for block in range(1, design_matrix.shape[1] -3)])
-    sorted([block for block in range(1, design_matrix.shape[1] -4)] + [block for block in range(1, design_matrix.shape[1] -4)])#[-1 if re.search(r'G1|G2', participant) else -2 for participant in scans]
-    
-    sorted([block for block in range(1, design_matrix.shape[1] -2)] + [block for block in range(1, design_matrix.shape[1] -2)])
-    '''
+ 
     eb_data = {
-        'block_one': [-1 for block in range(0, design_matrix.shape[0])],
-        'group_block': [1 if re.search(r'G1|G2', participant) else 2 for participant in scans],
-        'time_block': sorted([block for block in range(1, design_matrix.shape[1] -2)] + [block for block in range(1, design_matrix.shape[1] -2)]),
+        'block_one': [1 for block in range(0, design_matrix.shape[0])],
+        'between_perms': sorted([block for block in range(1, design_matrix.shape[1] -2)] + [block for block in range(1, design_matrix.shape[1] -2)]),
+        'within_perms': [1 if re.search(r'G1|G2', participant) else 2 for participant in scans],
         }
 
     eb_df = pd.DataFrame(eb_data)
@@ -281,7 +271,6 @@ if __name__ == "__main__":
     print('\nStarting FSL PALM script\n')
     print('-'*100, '\n')
     flags = options()
-    flags["task"] = 'happy'
     paths = get_paths(flags['task'])
 
     # Creates design matrix and gets list of participants scans

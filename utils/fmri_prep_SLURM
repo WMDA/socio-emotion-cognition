@@ -1,0 +1,30 @@
+#! /bin/bash
+
+#SBATCH --job-name=fmri_prep
+#SBATCH --output=/data/project/BEACONB/logs/%j_fmriprep.out
+#SBATCH --export=none
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=10G
+
+source /software/system/modules/latest/init/bash
+module use /software/system/modules/NaN/generic
+module purge
+module load nan
+
+# Load in script dependent modules here
+module load fmriprep/21.0.2
+module load miniconda/3
+
+
+# set the working variables
+working_dir=/data/project/BEACONB
+subject=sub-G2056
+bids_dir=$working_dir/CNSCNSD/bids_t1/
+outputdata=$working_dir/task_fmri/eft/preprocessed_t1_backups/
+work=$working_dir/task_fmri/eft/preprocessed_t1_backups/work
+number=`echo $subject | cut -d"-" -f2`
+directory_to_delete=`echo single_subject_${number}_wf`
+
+echo "fmriprep $bids_dir $outputdata participant -w $work --participant_label $subject -t eft --write-graph --nthreads 4 --omp-nthreads 4 --mem_mb 20480 --stop-on-first-crash --output-spaces MNI152NLin2009cAsym:res-2 --fs-license-file $working_dir/.license.txt"
+fmriprep $bids_dir $outputdata participant --participant_label $subject -w $work -t eft --write-graph --nthreads 4 --omp-nthreads 4 --mem_mb 20480 --output-spaces MNI152NLin2009cAsym:res-2 --stop-on-first-crash --fs-license-file $working_dir/.license.txt
+rm -rf $work/fmriprep_wf/$directory_to_delete
