@@ -1,4 +1,4 @@
 #!/bin/bash
 
-rm -rf /data/project/BEACONB/task_fmri/happy/2ndlevel/mixed_model
+rm -rf /data/project/BEACONB/task_fmri/happy/2ndlevel/*
 rm -rf /data/project/BEACONB/task_fmri/happy/2ndlevel/.designfiles

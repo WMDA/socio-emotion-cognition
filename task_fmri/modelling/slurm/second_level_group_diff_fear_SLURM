@@ -1,0 +1,18 @@
+#! /bin/bash
+
+#SBATCH --job-name=palm_happy
+#SBATCH --output=/data/project/BEACONB/logs/fear_group_diff.out
+#SBATCH --export=none
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=10G
+
+source /software/system/modules/latest/init/bash
+module use /software/system/modules/NaN/generic
+module purge
+module load nan
+
+module load miniconda/3
+
+echo "Running on $HOSTNAME"
+conda activate neuroimaging
+python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/modelling/second_level_group_differences.py -t fear -p 10000

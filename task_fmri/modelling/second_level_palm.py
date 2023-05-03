@@ -35,8 +35,28 @@ def options() -> dict:
                       help='number of permutations to run')
     return vars(args.parse_args())
 
+class Contrast:
 
-def set_up_design_df(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    A simple class to change pd.Dummies into a 1 and -1.
+
+    Usage
+    ----
+    for column in df.columns:
+            update = Contrast()
+            df[column] = df[column].apply(update.contrast_genrator)
+
+    '''
+    def __init__(self) -> None:
+        self.counter = 0
+    def contrast_genrator(self, val):
+        if val == 1 and self.counter == 1:
+            return -1
+        else:
+            self.counter += val
+            return val
+              
+def set_up_design_df(df: pd.DataFrame, subtractve=False) -> pd.DataFrame:
     
     '''
     Function to set up dataframe for design matrix.
@@ -51,38 +71,31 @@ def set_up_design_df(df: pd.DataFrame) -> pd.DataFrame:
     df: pd.DataFrame 
         Dataframe of participants scans
 
+    subtractive: bool 
+        If true will set 0 in design matrix to -1. 
+        Default False.
     Returns
     -------
     long_df: pd.Dataframe
             Dataframe in long form of group, time and intercept
     '''
+    if subtractve == True:
+        design_matrix_value = -1
+    else:
+        design_matrix_value = 0
     df['sub'] = df.index
     long_df = pd.melt(df, id_vars=['sub'], 
                       var_name='time_point', 
                       value_vars=['t1', 't2',], 
                       value_name='scans').sort_values(by=['sub'], ascending=True).reset_index(drop=True)
-    long_df['group'] = long_df['scans'].apply(lambda participants: 0 if 'sub-G1' in participants or 'sub-B1' in participants else 1)
-    long_df['time'] = long_df['time_point'].apply(lambda participants: 0 if 't1' in participants else 1)
+    long_df['group'] = long_df['scans'].apply(lambda participants: design_matrix_value if 'sub-G1' in participants or 'sub-B1' in participants else 1)
+    long_df['time'] = long_df['time_point'].apply(lambda participants: design_matrix_value if 't1' in participants else 1)
     long_df['intercept'] = 1
     long_df = long_df.drop(long_df[long_df['sub'] == 75].index)
 
     return long_df
 
-class Contrast:
-
-    '''
-    A simple class to change pd.Dummies into a 1 and -1.
-    '''
-    def __init__(self) -> None:
-        self.counter = 0
-    def contrast_genrator(self, val):
-        if val == 1 and self.counter == 1:
-            return -1
-        else:
-            self.counter += val
-            return val
-        
-def create_design_matrix(path: str) -> dict:
+def create_design_matrix(path: str, subtractive=False, random_effects_subtractive=False) -> dict:
     
     '''
     Function to create a design matrix
@@ -91,9 +104,14 @@ def create_design_matrix(path: str) -> dict:
     ----------
     path: str
         File path to csv of participants scans
-    out_directory: str
-        Directory to store design matrix
+    
+    subtractive: bool 
+        If true will set 0 in design matrix to -1. 
+        Default False.
 
+    random_effects_subtractive: bool 
+        If true will set 1 in design matrix to -1. 
+        Default False.
     Returns
     ------
     dict : dictionary object
@@ -103,23 +121,23 @@ def create_design_matrix(path: str) -> dict:
     '''
 
     participant_scans = pd.read_csv(f"{path}/1stlevel_location.csv")
-    long_df = set_up_design_df(participant_scans)
+    long_df = set_up_design_df(participant_scans, subtractive)
     scans = long_df['scans'].to_list()
     random_effects = pd.get_dummies(long_df['sub']).add_prefix('sub-')
-    for column in random_effects:
-        update = Contrast()
-        random_effects[column] = random_effects[column].apply(update.contrast_genrator)
+    
+    if random_effects_subtractive == True:
+        for column in random_effects:
+            update = Contrast()
+            random_effects[column] = random_effects[column].apply(update.contrast_genrator)
     interaction_effect = long_df['time'] * long_df['group']
-    design_matrix = pd.concat([long_df[['group', 'time']], 
-                               interaction_effect.rename('interaction'), 
+    design_matrix = pd.concat([long_df[['time']], interaction_effect.rename('interaction'),  
                                random_effects], axis=1) 
-    for column in design_matrix[['group', 'time', 'interaction']]:
-        design_matrix[column] = design_matrix[column].apply(lambda x: -1 if x == 0 else 1)
     
     return  {
         'scans': scans,
         'design_matrix': design_matrix
     }
+
 
 def get_paths(task: str) -> dict:
 
@@ -167,17 +185,15 @@ def create_design_files(design_matrix: pd.DataFrame, second_level_directory: str
     '''
 
     t_contrasts = np.vstack((
-                        np.hstack(([1, 0, 0], np.zeros(design_matrix.shape[1] -3))), # group
-                        np.hstack(([0, 1, 0], np.zeros(design_matrix.shape[1] -3))), # time
-                        np.hstack(([0, 0, 1], np.zeros(design_matrix.shape[1] -3))) # interaction
+                    np.hstack(([1, 0], np.zeros(design_matrix.shape[1] -2))), # time
+                    np.hstack(([0, 1], np.zeros(design_matrix.shape[1] -2))) # interaction
     ))
     t_contrasts = pd.DataFrame(t_contrasts)
     
- 
     eb_data = {
-        'block_one': [1 for block in range(0, design_matrix.shape[0])],
-        'between_perms': sorted([block for block in range(1, design_matrix.shape[1] -2)] + [block for block in range(1, design_matrix.shape[1] -2)]),
-        'within_perms': [1 if re.search(r'G1|G2', participant) else 2 for participant in scans],
+        'block_one': [-1 for block in range(0, design_matrix.shape[0])],
+        'between_perms': sorted([block for block in range(1, design_matrix.shape[1] -1)] + [block for block in range(1, design_matrix.shape[1] -1)]),
+        'within_perms':  [1 if re.search(r'G1|G2', participant) else 2 for participant in scans],
         }
 
     eb_df = pd.DataFrame(eb_data)
@@ -224,7 +240,7 @@ def creating_cope_and_mask(scans: list, second_level_directory: str) -> None:
     group_mask_sampled.to_filename(os.path.join(second_level_directory, "mask_img.nii"))
 
 
-def run_palm(second_level_directory: str, results_directory: str, perms: int):
+def run_palm(second_level_directory: str, results_directory: str, perms: int) -> None:
 
     '''
     Function to set up and then sys call PALM.
@@ -244,11 +260,9 @@ def run_palm(second_level_directory: str, results_directory: str, perms: int):
     copes_images = os.path.join(second_level_directory, 'copes_img.nii')
     mask_image = os.path.join(second_level_directory, 'mask_img.nii')
     design_files = glob.glob(os.path.join(paths['2ndlevel_dir'],".designfiles/*" ))
-    
     mat_file = [file for file in design_files if 'design_matrix.csv' in file][0]
     con_one = [file for file in design_files if 't_contrasts.csv' in file][0]
     grp_file = [file for file in design_files if 'eb_file.csv' in file][0]
-
     palm_commnd = f"""
                     palm -i {copes_images}\
                                -m {mask_image}\
@@ -257,7 +271,7 @@ def run_palm(second_level_directory: str, results_directory: str, perms: int):
                                -t {con_one}\
                                -eb {grp_file}\
                                -o {results_directory}\
-                               -vg auto -ee -T -logp\
+                               -T -logp -accel tail -nouncorrected\
                             """
     # -noranktest
     print('\nPalm command\n')
@@ -276,7 +290,7 @@ if __name__ == "__main__":
     # Creates design matrix and gets list of participants scans
     print('\nSetting up workflow\n')
     print('\tGetting participants scans and setting up design matrix\n')
-    matrix_dict = create_design_matrix(paths['base_dir'])
+    matrix_dict = create_design_matrix(paths['base_dir'], random_effects_subtractive=False, subtractive=False)
     
     # Creates and saves design files 
     print('\nCreating design files')

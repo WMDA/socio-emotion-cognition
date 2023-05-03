@@ -1,7 +1,7 @@
 #! /bin/bash
 
-#SBATCH --job-name=palm
-#SBATCH --output=/data/project/BEACONB/logs/t_contrast_all_1_0_dm_min_1.out
+#SBATCH --job-name=palm_happy
+#SBATCH --output=/data/project/BEACONB/logs/fear_tail.out
 #SBATCH --export=none
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=25G
@@ -15,7 +15,6 @@ module load fsl/6.0.5.2
 module load miniconda/3
 module load palm/20220826
 
-
 echo "Running on $HOSTNAME"
 conda activate neuroimaging
-python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/modelling/second_level_palm.py -t happy -p 100
+python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/modelling/second_level_palm.py -t fear -p 1000
