@@ -9,7 +9,6 @@ import pandas as pd
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning) #Filterout all the nilearn user warnings
 
-
 class Results_table:
         
     '''  
@@ -177,7 +176,7 @@ class Results_table:
         import glob
         import re
         files = glob.glob(f'{self.output_directory}/atlasreader*')
-        renamed_files = [os.rename(file, re.sub(r'atlasreader', self.contrast_name , file)) for file in files]
+        [os.rename(file, re.sub(r'atlasreader', self.contrast_name , file)) for file in files]
 
 def get_images(path: str, voxel_img=False) -> list:
 
