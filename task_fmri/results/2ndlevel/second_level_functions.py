@@ -358,10 +358,40 @@ def participant_data(base_dir: str) -> pd.DataFrame:
     long_df['scans'] = long_df['scans'].str.replace(r'/.*?/.*?/.*?/.*?/.*?/.*?/.*?/', '', regex=True)
     long_df['scans'] = long_df['scans'].str.replace(r'/con.*', '', regex=True)
     long_df['group'] = long_df['scans'].apply(lambda participants: 'HC' if 'sub-G1' in participants or 'sub-B1' in participants else 'AN')
+    long_df = long_df.rename(columns={'scans': 'id'})
 
     return long_df
 
-def get_parameter_estimates(image: str, threshold_value: str) -> pd.DataFrame:
-    build_mask(image, threshold_value)
-    extract_parameter_estimates(path, mask) 
+def get_parameter_estimates(image: str, 
+                            threshold_value: str, 
+                            path: str, 
+                            base_dir: str) -> pd.DataFrame:
+    
+    '''
+    Function to get parameter estimates from cope image.
 
+    Parameters
+    ---------
+    image: str
+        str to path of image
+
+    threshold_value: int
+        threshold value to threshold image at.
+        Everything equal and above is set to 1
+        while the rest is set to 0.
+
+    path: str
+        string to directory with cope_img.nii.gz 
+    
+    base_dir: str
+        directory where 1stlevel_location.csv is located.
+
+    Returns
+    -------
+    pd.DataFrame of parameter estimates ordered by subject and time.
+    '''
+    
+    mask = build_mask(image, threshold_value)
+    parameter_estimates = extract_parameter_estimates(path, mask) 
+    participant_df = participant_data(base_dir)
+    return pd.concat((participant_df, pd.DataFrame(parameter_estimates)), axis=1)
