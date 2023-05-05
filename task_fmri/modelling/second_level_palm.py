@@ -192,8 +192,8 @@ def create_design_files(design_matrix: pd.DataFrame, second_level_directory: str
     
     eb_data = {
         'block_one': [-1 for block in range(0, design_matrix.shape[0])],
-        'between_perms': sorted([block for block in range(1, design_matrix.shape[1] -1)] + [block for block in range(1, design_matrix.shape[1] -1)]),
-        'within_perms':  [1 if re.search(r'G1|G2', participant) else 2 for participant in scans],
+        'within_perms': sorted([block for block in range(1, design_matrix.shape[1] -1)] + [block for block in range(1, design_matrix.shape[1] -1)]),
+        'between_perms':  [1 if re.search(r'G1|G2', participant) else 2 for participant in scans],
         }
 
     eb_df = pd.DataFrame(eb_data)
@@ -271,7 +271,7 @@ def run_palm(second_level_directory: str, results_directory: str, perms: int) ->
                                -t {con_one}\
                                -eb {grp_file}\
                                -o {results_directory}\
-                               -T -logp -accel tail -nouncorrected\
+                               -T -logp -accel tail -nouncorrected -saveglm\
                             """
     # -noranktest
     print('\nPalm command\n')

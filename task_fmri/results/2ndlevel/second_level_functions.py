@@ -1,5 +1,6 @@
 import nilearn.image as img
 from nilearn.reporting import get_clusters_table
+import numpy as np
 import nibabel
 import glob
 from decouple import config
@@ -7,7 +8,7 @@ import os
 import pandas as pd
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning) #Filterout all the nilearn user warnings
-from atlasreader import create_output
+
 
 class Results_table:
         
@@ -101,6 +102,7 @@ class Results_table:
         None
         '''
         
+        
         if self.pval_table.empty:
             print('No Significant clusters')
             self.no_significant_clusters = True
@@ -125,7 +127,8 @@ class Results_table:
         -------
         None
         '''
-        
+        from atlasreader import create_output
+
         return create_output(
                             self.contrast, 
                             cluster_extent=0, 
@@ -269,3 +272,96 @@ def load_cluster_csv(path: str, csv_name: str) -> pd.DataFrame:
         return pd.read_csv(f'{path}/{csv_name}')
     except Exception:
         print('No Significant Clusters')
+
+def build_mask(image: str, threshold_value: int ) -> nibabel.nifti1.Nifti1Image:
+
+    '''
+    Function to create a binary mask from a stats map.
+
+    Parameters
+    ----------
+    image: str
+        str to path of image
+
+    threshold_value: int
+        threshold value to threshold image at.
+        Everything equal and above is set to 1
+        while the rest is set to 0.
+
+    Returns
+    -------
+    nibabel.nifti1.Nifti1Image of binary mask.
+    '''
+    
+    import copy
+    
+    fmri_img = img.load_img(image)
+    thresholded_img = img.threshold_img(fmri_img, threshold=threshold_value)
+    fmri_img_data = thresholded_img.get_fdata()
+    data = copy.deepcopy(fmri_img_data)
+    data[data >= threshold_value] = 1
+
+    return img.new_img_like(fmri_img, data)
+
+def extract_parameter_estimates(path: str, mask: nibabel.nifti1.Nifti1Image) -> np.ndarray:
+    
+    '''
+    Function to extract signal from copes images. 
+    wrapper around nilearn.maskers.MultiNiftiMasker but
+    does not pre-processing to the signal.
+
+    Parameters
+    ----------
+    path: str
+        string to directory with cope_img.nii.gz 
+    
+    mask: nibabel.nifti1.Nifti1Image
+        ROI mask to extract signal from
+
+    Returns
+    -------
+    np.ndarray of signal with dim 0 representing subject
+    and dim 1 representing significant voxel 
+    '''
+    
+    from nilearn.maskers import MultiNiftiMasker
+    
+    cope = img.load_img(os.path.join(path, 'copes_img.nii.gz'))
+    masker = MultiNiftiMasker(
+        mask, 
+    )
+    
+    return masker.fit(cope).transform(cope)
+
+def participant_data(base_dir: str) -> pd.DataFrame:
+
+    '''
+    Function to read in and build df of participants information.
+
+    Parameters
+    ----------
+    base_dir: str
+        directory where 1stlevel_location.csv is located.
+
+    Returns
+    -------
+    long_df: pd.DataFrame
+        DataFrame in long form of subject, time and id values
+    '''
+    participant_scans = pd.read_csv(f"{base_dir}/1stlevel_location.csv")
+    participant_scans['sub'] = participant_scans.index
+    long_df = pd.melt(participant_scans, id_vars=['sub'], 
+                      var_name='time_point', 
+                      value_vars=['t1', 't2',], 
+                      value_name='scans').sort_values(by=['sub'], ascending=True).reset_index(drop=True)
+    long_df = long_df.drop(long_df[long_df['sub'] == 75].index)
+    long_df['scans'] = long_df['scans'].str.replace(r'/.*?/.*?/.*?/.*?/.*?/.*?/.*?/', '', regex=True)
+    long_df['scans'] = long_df['scans'].str.replace(r'/con.*', '', regex=True)
+    long_df['group'] = long_df['scans'].apply(lambda participants: 'HC' if 'sub-G1' in participants or 'sub-B1' in participants else 'AN')
+
+    return long_df
+
+def get_parameter_estimates(image: str, threshold_value: str) -> pd.DataFrame:
+    build_mask(image, threshold_value)
+    extract_parameter_estimates(path, mask) 
+
