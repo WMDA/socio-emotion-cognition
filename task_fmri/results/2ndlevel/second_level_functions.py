@@ -324,10 +324,10 @@ def extract_parameter_estimates(path: str, mask: nibabel.nifti1.Nifti1Image) -> 
     and dim 1 representing significant voxel 
     '''
     
-    from nilearn.maskers import MultiNiftiMasker
+    from nilearn.maskers import NiftiMasker
     
-    cope = img.load_img(os.path.join(path, 'copes_img.nii.gz'))
-    masker = MultiNiftiMasker(
+    cope = img.load_img(os.path.join(path, 'copes_img.nii.gz')) 
+    masker = NiftiMasker(
         mask, 
     )
     
@@ -394,4 +394,4 @@ def get_parameter_estimates(image: str,
     mask = build_mask(image, threshold_value)
     parameter_estimates = extract_parameter_estimates(path, mask) 
     participant_df = participant_data(base_dir)
-    return pd.concat((participant_df, pd.DataFrame(parameter_estimates)), axis=1)
+    return pd.concat((participant_df.reset_index(drop=True), pd.DataFrame(parameter_estimates)), axis=1)
