@@ -259,7 +259,7 @@ def run_palm(second_level_directory: str, results_directory: str, perms: int) ->
 
     copes_images = os.path.join(second_level_directory, 'copes_img.nii')
     mask_image = os.path.join(second_level_directory, 'mask_img.nii')
-    design_files = glob.glob(os.path.join(paths['2ndlevel_dir'],".designfiles/*" ))
+    design_files = glob.glob(os.path.join(second_level_directory, ".designfiles/*" ))
     mat_file = [file for file in design_files if 'design_matrix.csv' in file][0]
     con_one = [file for file in design_files if 't_contrasts.csv' in file][0]
     grp_file = [file for file in design_files if 'eb_file.csv' in file][0]
