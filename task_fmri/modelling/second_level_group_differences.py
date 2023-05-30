@@ -118,7 +118,7 @@ def mean_img(subject_scans: pd.DataFrame) -> dict:
     for subject in range(0, subject_scans.shape[0]):
         try:
             t1_image = img.load_img(subject_scans['t1'].iloc[subject])
-            t2_image = img.load_img(subject_scans['t1'].iloc[subject])
+            t2_image = img.load_img(subject_scans['t2'].iloc[subject])
             mean_img = img.mean_img([t1_image, t2_image])
 
         except Exception as e:
@@ -166,7 +166,7 @@ def ols(subjects_to_analyse: list,
     mask=masks_2ndlevel,
     model_intercept=True,
     n_perm=int(perm),
-    n_jobs=4,
+    n_jobs=6,
     tfce=True,
     verbose=3
     )

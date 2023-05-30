@@ -271,7 +271,7 @@ def run_palm(second_level_directory: str, results_directory: str, perms: int) ->
                                -t {con_one}\
                                -eb {grp_file}\
                                -o {results_directory}\
-                               -T -logp -accel tail -nouncorrected -saveglm\
+                               -T -logp -accel tail -nouncorrected\
                             """
     # -noranktest
     print('\nPalm command\n')

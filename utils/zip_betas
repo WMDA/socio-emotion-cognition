@@ -1,11 +1,12 @@
 #! /bin/bash
 
-root=""
+root=$1
 cd $root
 folders=*
 
 for folder in $folders;
 do 
+echo "zipping betas in $folder"
 cd $folder
 betas=beta_*
 gzip $betas

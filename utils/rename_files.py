@@ -3,7 +3,7 @@ import re
 from decouple import config
 import glob
 
-path = os.path.join(config('eft'), '2ndlevel', 'mixed_model')
+path = os.path.join(config('happy'), '2ndlevel', 'mixed_model')
 
 files = glob.glob(f'{path}/*.nii*')
 

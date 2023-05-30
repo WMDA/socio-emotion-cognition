@@ -5,7 +5,7 @@ import second_level_functions as slf
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning) #Filterout all the nilearn user warnings
 
-tasks = ['happy', 'fear', 'eft']
+tasks = ['happy', 'fear']#, 'eft']
 
 for task in tasks:
     

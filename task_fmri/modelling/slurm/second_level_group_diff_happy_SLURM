@@ -3,8 +3,8 @@
 #SBATCH --job-name=happy_group_diff
 #SBATCH --output=/data/project/BEACONB/logs/happy_group_diff.out
 #SBATCH --export=none
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=10G
+#SBATCH --cpus-per-task=6
+#SBATCH --mem=5G
 
 source /software/system/modules/latest/init/bash
 module use /software/system/modules/NaN/generic
