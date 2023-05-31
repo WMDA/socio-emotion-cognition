@@ -15,4 +15,4 @@ module load miniconda/3
 
 echo "Running on $HOSTNAME"
 conda activate neuroimaging
-python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/modelling/second_level_group_differences.py -t eft -p 10000
+python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/modelling/group_difference_palm.py -t eft -p 1000

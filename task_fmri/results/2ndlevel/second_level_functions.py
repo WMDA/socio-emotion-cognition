@@ -133,7 +133,6 @@ class Results_table:
                             cluster_extent=0, 
                             direction='both', 
                             voxel_thresh=self.stat_threshold_val, 
-                            atlas='harvard_oxford', 
                             outdir=self.output_directory,
                             glass_plot_kws={'title': self.graph_name},
                             stat_plot_kws={'title': self.graph_name, 
@@ -156,8 +155,8 @@ class Results_table:
         '''
         cluster_csv = pd.read_csv(f'{self.output_directory}/atlasreader_clusters.csv')
         cluster_csv['pval'] = 10 ** -cluster_csv['cluster_mean'].values
-        cols = ['cluster_id', 'peak_x', 'peak_y', 'peak_z',	'volume_mm', 'cluster_mean', 'pval', 'harvard_oxford']
-        cluster_csv = cluster_csv[cols].rename(columns={'cluster_mean': 'log10p', 'harvard_oxford': 'region'})
+        cols = ['cluster_id', 'peak_x', 'peak_y', 'peak_z',	'volume_mm', 'cluster_mean', 'pval', 'harvard_oxford', 'aal', 'desikan_killiany']
+        cluster_csv = cluster_csv[cols].rename(columns={'cluster_mean': 'log10p'})
         cluster_csv.to_csv(f'{self.output_directory}/atlasreader_clusters.csv', index=False)
 
     def rename_output(self) -> None:

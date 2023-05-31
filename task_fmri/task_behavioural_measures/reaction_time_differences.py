@@ -7,7 +7,10 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def get_experimental_dataframes(task) -> dict:
-
+    
+    '''
+    '''
+    
     experiment_dir = config('raw_data')
     hc_t1 = glob.glob(os.path.join(experiment_dir, 'bids_1','sub-G1*', 'func', f'*_task-{task}_events.tsv'))
     an_t1 = glob.glob(os.path.join(experiment_dir, 'bids_1','sub-G2*', 'func', f'*_task-{task}_events.tsv'))
@@ -50,13 +53,19 @@ def get_rt(experimental_dfs) -> list:
 
 def reaction_times(task: str) -> pd.DataFrame:  
     df_paths = get_experimental_dataframes(task)
-    hc_values = get_rt(df_paths['HC_t1'])
-    an_values = get_rt(df_paths['AN'])
-    return pd.DataFrame(data={
-                              'HC': hc_values, 
-                              'AN': an_values
-                              })
+    
+    reaction_times = dict(zip([key for key in df_paths.keys()], [list() for key in range(len(df_paths))]))
+    for key in df_paths.keys():
+        print(df_paths[key])
+        values = get_rt(df_paths[key])
+        print(values)
+        reaction_times[key].append(values)
+    print(reaction_times)
+    #return pd.DataFrame(data={
+    #                          'HC': hc_values, 
+    #                          'AN': an_values
+    #                          })
 
 
 df = reaction_times('fear')
-print(df.shape)
+#print(df.shape)
