@@ -36,9 +36,9 @@ def subjectinfo(subject_id: str) -> list:
     from nipype.interfaces.base import Bunch
     
     experiment_dir = config('eft')
-    dfs_events = os.path.join(config('raw_data'), 'bids_t2')
-    events_df = pd.read_csv(dfs_events + f'/{subject_id}/func/{subject_id}_task-eft_events.tsv', sep=',')
-    confounds_df = pd.read_csv(os.path.join(experiment_dir,'preprocessed_t2', subject_id) +
+    dfs_events = os.path.join(config('raw_data'), 'bids_t1')
+    events_df = pd.read_csv(dfs_events + f'/{subject_id}/func/{subject_id}_task-eft_events.tsv', sep='\t')
+    confounds_df = pd.read_csv(os.path.join(experiment_dir,'preprocessed_t1', subject_id) +
                         f'/func/{subject_id}_task-eft_desc-confounds_timeseries.tsv', sep='\t').fillna(0)
     
     # Data driven PCA approach. Selects the components to exaplain the minimum cumulative fraction of variance
@@ -75,7 +75,6 @@ def subjectinfo(subject_id: str) -> list:
     
     events_df['RT'] = events_df['RT'].apply(lambda rt: int(0) if rt =='.' else int(rt))
     events_df['demean_rt'] = events_df['RT'] -  events_df['RT'].mean()  
-    events_df['correct'] = events_df['IsCorrect'].apply(lambda correct: 1 if correct =='Yes' else 0)
 
     subject_info =  [
         Bunch(conditions=[condition for condition in events.keys()],
@@ -94,7 +93,7 @@ def subjectinfo(subject_id: str) -> list:
 #  Global parameters lots of these are repeated due to nipype quirks
 experiment_dir = config('eft')
 subject_to_analyse = [sys.argv[1]] 
-layout = BIDSLayout(os.path.join(experiment_dir,'preprocessed_t2', subject_to_analyse[0]), validate=False)
+layout = BIDSLayout(os.path.join(experiment_dir,'preprocessed_t1', subject_to_analyse[0]), validate=False)
 img_file = layout.get(subject=subject_to_analyse[0].lstrip('sub-'), datatype='func', 
                       space='MNI152NLin2009cAsym', suffix='bold', extension='nii.gz')[0]
 img_file_path = os.path.join(layout.root,'func', img_file.filename)
@@ -201,10 +200,10 @@ level_1_analysis.connect([
 (level_1_estimate, contrast_estimates, [('spm_mat_file', 'spm_mat_file'), 
                                         ('beta_images', 'beta_images'),
                                         ('residual_image', 'residual_image')]),
-(contrast_estimates, data_sink, [('spm_mat_file', 'T2.@spm_mat'),
-                                     ('spmT_images', 'T2.@T'),
-                                     ('con_images', 'T2.@con')]),
-(level_1_estimate, data_sink, [('beta_images', 'T2.@beta')])
+(contrast_estimates, data_sink, [('spm_mat_file', 'T1.@spm_mat'),
+                                     ('spmT_images', 'T1.@T'),
+                                     ('con_images', 'T1.@con')]),
+(level_1_estimate, data_sink, [('beta_images', 'T1.@beta')])
 ])
 
 if __name__ == "__main__":
