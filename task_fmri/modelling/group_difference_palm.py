@@ -263,8 +263,8 @@ if __name__ == "__main__":
     creating_cope_and_mask(list_of_images, paths_location['2ndlevel_dir'])
 
     # Makes results directory and defines path
-    os.mkdir(os.path.join(paths_location['2ndlevel_dir'], 'test'))
-    results_path = os.path.join(paths_location['2ndlevel_dir'], 'test')
+    os.mkdir(os.path.join(paths_location['2ndlevel_dir'], 'group'))
+    results_path = os.path.join(paths_location['2ndlevel_dir'], 'group')
     copes_images = os.path.join(paths_location['2ndlevel_dir'], 'copes_img.nii')
     mask_image = os.path.join(paths_location['2ndlevel_dir'], 'mask_img.nii')
     

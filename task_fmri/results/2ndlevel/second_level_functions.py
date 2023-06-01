@@ -393,3 +393,86 @@ def get_parameter_estimates(image: str,
     parameter_estimates = extract_parameter_estimates(path, mask) 
     participant_df = participant_data(base_dir)
     return pd.concat((participant_df.reset_index(drop=True), pd.DataFrame(parameter_estimates)), axis=1)
+
+def extract_peak_voxel(copes_dir: str, coordinates: list) -> np.ndarray:
+
+    '''
+    Function to extract signal from peak voxel copes images. 
+
+    Parameters
+    ----------
+    copes_dir: str
+        string to directory with cope_img.nii.gz 
+    coordinates: list
+        list of tuple of co-ordinates in MNI
+    
+    Returns
+    -------
+    np.ndarray of signal with dim 0 representing subject
+    and dim 1 representing peal voxel
+    '''
+    from nilearn.maskers import NiftiSpheresMasker
+    
+    masker = NiftiSpheresMasker(
+        seeds=coordinates,
+    )
+    return masker.fit_transform(img.load_img(os.path.join(copes_dir, 'copes_img.nii.gz')))
+
+def get_coordinates(path: str, contrast: str) -> dict:
+
+    '''
+    Function to return MNI co-ordinates of significant 
+    clusters. 
+
+    Parameters
+    ----------
+    path: str 
+        str of path to output of Results_table.
+    contrast: str
+        str name of contrast.
+
+    Returns
+    -------
+    dict: dictionary object 
+        dictionary of a list tuples of MNI co-ordinates and
+        names of clusters
+
+    '''
+    csv_name = f'{contrast}_clusters.csv'
+    cluster_df = load_cluster_csv(path, csv_name)
+    names = cluster_df['harvard_oxford'].str.replace(r'\d*.\d*%|;(.*)','', regex=True).to_list()
+    
+    return {
+       'MNI': list(map(tuple, cluster_df.iloc[:,1:4].values)),
+       'names': [value + str(names[:index].count(value) + 1) if names.count(value) > 1 
+                 else value for index, value in enumerate(names)]
+    }
+
+def get_peak_voxel(base_dir: str, 
+                   path: str, 
+                   copes_dir: str,
+                   contrast: str) -> pd.DataFrame:
+    
+    '''
+    Function to get peak voxel from significant clusters
+
+    Parameters
+    ----------
+    base_dir: str 
+        directory where 1stlevel_location.csv is located.
+    path: str 
+        str of path to output of Results_table.
+    copes_dir: str
+        str of path to copes dir.
+    contrast: str
+        str name of contrast.
+
+    Returns
+    ------
+    pd.DataFrame of parameter estimates ordered by subject and time.
+    '''
+
+    coordinates = get_coordinates(path, contrast)
+    peak_voxel = extract_peak_voxel(copes_dir, coordinates['MNI'])
+    participant_df = participant_data(base_dir)
+    return pd.concat((participant_df.reset_index(drop=True), pd.DataFrame(peak_voxel, columns=coordinates['names'])), axis=1)

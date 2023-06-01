@@ -24,6 +24,6 @@ def rename_eft_files(path):
 
 
 
-path = os.path.join(config('preprocessed_eft_1'))
-rename_eft_files(path)
+path = os.path.join(config('eft'), '2ndlevel', 'mixed_model')
+rename_fmri(path)
 
