@@ -440,11 +440,15 @@ def get_coordinates(path: str, contrast: str) -> dict:
     '''
     csv_name = f'{contrast}_clusters.csv'
     cluster_df = load_cluster_csv(path, csv_name)
-    names = cluster_df['harvard_oxford'].str.replace(r'\d*.\d*%|;(.*)','', regex=True).to_list()
-    
+
+    if cluster_df['harvard_oxford'].str.contains('no_label')[0] == False:
+        names = cluster_df['harvard_oxford'].str.replace(r'\d*.\d*%|;(.*)','', regex=True).str.strip().to_list()
+    else:
+        names = cluster_df['aal'].str.replace(r'\d.*\d%.no_label;','', regex=True).str.replace(r'\d*.\d*%|;(.*)','', regex=True).str.strip().to_list()
+
     return {
        'MNI': list(map(tuple, cluster_df.iloc[:,1:4].values)),
-       'names': [value + str(names[:index].count(value) + 1) if names.count(value) > 1 
+       'names': [value + str(names[:index].count(value) + 1).lstrip(' ') if names.count(value) > 1 
                  else value for index, value in enumerate(names)]
     }
 
