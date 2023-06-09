@@ -19,5 +19,5 @@ PARTICIPANT="`awk FNR==$SLURM_ARRAY_TASK_ID $INDEX`"
 echo "Running on $HOSTNAME"
 echo $PARTICIPANT
 conda activate neuroimaging
-python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/beta_regression.py $PARTICIPANT
+python3 /data/project/BEACONB/task_fmri/socio-emotion-cognition/task_fmri/mvpa/beta_regression.py $PARTICIPANT
 echo "Complete"
