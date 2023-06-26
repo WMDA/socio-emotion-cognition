@@ -92,8 +92,9 @@ def create_tsv(csv: str, stim: str) -> pd.DataFrame:
         lambda col: stimuli(col, stim))
     stim_file: pd.Series = df['ImageFile'].rename('stim_file')
     response_time: pd.Series = df['RT'].rename('response_time')
+    iscorrect: pd.Series = df['IsCorrect']
     tsv: pd.DataFrame = pd.concat([onset, dur, trial_type.rename(
-        'trial_type'), response_time, stim_file], axis=1)
+        'trial_type'), response_time, stim_file, iscorrect], axis=1)
     return tsv
 
 

@@ -36,6 +36,33 @@ def get_experimental_dataframes(task: str) -> dict:
         'HC_t2': hc_t2
     }
 
+def load_df(path: str) -> pd.DataFrame:
+    
+    '''
+    Function to load df.
+
+    Parameters
+    ----------
+    path: str
+        str of path to df
+    
+    Returns
+    -------
+    df: pd.DataFrame
+        Dataframe 
+
+    '''
+
+    try:
+        df = pd.read_csv(path, sep='\t')
+        if len(df.columns) < 3:
+            df = pd.read_csv(path)
+        return df
+    except Exception as e:
+        print(e)
+    
+
+
 def get_rt(experimental_dfs: list) -> dict:
 
     '''
@@ -58,9 +85,7 @@ def get_rt(experimental_dfs: list) -> dict:
         'subject': []
     }
     for dataframes in experimental_dfs:
-        df = pd.read_csv(dataframes, sep='\t')
-        if len(df.columns) < 3:
-            df = pd.read_csv(dataframes)
+        df = load_df(dataframes)
         column = 'RT'
         df['subject'] = re.findall(r'\D\d\d..', dataframes)[0]
         values_dictionary['subject'].append(df['subject'])
@@ -73,36 +98,6 @@ def get_rt(experimental_dfs: list) -> dict:
     return {'values': list(chain.from_iterable(values_dictionary['rt_values'])),
             'subjects': values_dictionary['subject']
             }
-
-def iscorrect(experimental_dfs: list) -> list:
-    
-    '''
-    Function to return RT in list format.
-
-    Parameters
-    ----------
-    experimental_dfs: list 
-        list of paths to dataframes
-
-    Returns
-    -------
-    rt_values: list 
-        list of rt values unordered
-    '''
-    
-    iscorrect = []
-    for dataframes in experimental_dfs:
-        df = pd.read_csv(dataframes, sep='\t')
-        if len(df.columns) < 3:
-            df = pd.read_csv(dataframes)
-        column = 'RT'
-        if column not in df.columns:
-            column = 'response_time' 
-        if df[column].dtype != 'int64':
-            df[column] = df[column].str.replace('.', '0').astype(int)
-        rt_values.append(df[column])
-    return list(chain.from_iterable(rt_values))
-
 
 def loop_groups(df_paths: list, task_correct=False) -> dict:  
 
@@ -219,6 +214,31 @@ def long_df(task: str, task_correct: bool=False) -> pd.DataFrame:
     df = organise_df(rts, task, task_correct)
     return df
 
+def filter_df(df: pd.DataFrame, condition: str) -> pd.DataFrame:
+    
+    '''
+    Function to filter dataframe
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        DataFrame of values.
+    condition: str
+        str to filter values on.
+
+    Returns
+    -------
+    df: pd.DataFrame
+        filtered dataframe.
+    '''
+    
+    try:
+        df = df[df['Condition']== condition]
+    except Exception:
+        df = df[df['trial_type']== condition]
+    
+    return df
+
 def get_mean(path: str, condition:str) -> float:
 
     '''
@@ -236,14 +256,8 @@ def get_mean(path: str, condition:str) -> float:
     float of mean
     '''
 
-
-    df = pd.read_csv(path, sep='\t')
-    if len(df.columns) < 3:
-            df = pd.read_csv(path)
-    try:
-        df = df[df['Condition']== condition]
-    except Exception:
-        df = df[df['trial_type']== condition]
+    df = load_df(path)
+    df = filter_df(df, condition)
     
     column = 'RT'
     if column not in df.columns:
@@ -375,3 +389,195 @@ def get_mean_rt_df(task: str, condition:str) -> pd.DataFrame:
     df = get_dfs(subjects, task)
     df['t2'] = df['t2'].str.replace('B2024', 'B2024B')
     return get_rt_summary(df, condition)
+
+def get_iscorrect_mean(dfs: pd.DataFrame, condition: str) -> pd.DataFrame:
+    
+    '''
+    Function to loop through dfs and return subject, group 
+    and iscorrect.
+
+    Parameters
+    ----------
+    dfs: pd.DataFrame
+        DataFrame with T1 abd T2 dataframe paths
+    condition: str 
+        str of condition to filter df by
+
+    Returns
+    -------
+    values_df: pd.DataFrame
+        DataFrame of iscorrect, subject
+        time point and group.
+    '''
+    
+    values_df = {
+        'iscorrect': [],
+        'subject': [],
+        'time_point': [],
+        'group': []
+    
+    }
+    
+    subject = 1
+    for row in dfs.iterrows():
+        try: 
+            df_t1 = load_df(row[1]['t1'])
+            df_t2 = load_df(row[1]['t2'])
+            df_t1 = filter_df(df_t1, condition)
+            df_t2 = filter_df(df_t2, condition)
+
+            if 'Yes' in df_t1['IsCorrect'].unique():
+                    df_t1['IsCorrect'] = df_t1['IsCorrect'].apply(lambda correct: 1 if correct=='Yes' else 0)
+                    df_t2['IsCorrect'] = df_t2['IsCorrect'].apply(lambda correct: 1 if correct=='Yes' else 0)
+
+            if 'Correct' in df_t1['IsCorrect'].unique():
+                df_t1['IsCorrect'] = df_t1['IsCorrect'].apply(lambda correct: 1 if correct=='Correct' else 0)
+                df_t2['IsCorrect'] = df_t2['IsCorrect'].apply(lambda correct: 1 if correct=='Correct' else 0)
+            
+            values_df['iscorrect'].append(df_t1['IsCorrect'].mean())
+            values_df['iscorrect'].append(df_t2['IsCorrect'].mean())
+            values_df['subject'].append(subject)
+            values_df['subject'].append(subject)
+            subject += 1
+            if 'sub-G1' in row[1]['t1']:
+                group = 'HC'
+            else:
+                group = 'AN'
+            values_df['group'].append(group)
+            values_df['group'].append(group)
+
+            values_df['time_point'].append('t1')
+            values_df['time_point'].append('t2')
+        except Exception as e:
+            print(e)
+            continue
+    return pd.DataFrame(
+        {
+            'iscorrect': values_df['iscorrect'],
+            'sub': values_df['subject'],
+            'time': values_df['time_point'],
+            'group': values_df['group'],
+        }
+    )
+
+def iscorrect(task: str, condition) -> pd.DataFrame:
+
+    '''
+    Function to get iscorrect values
+
+    Parameters
+    ----------
+    task: str
+        str of task
+    condition: str 
+        str of condition to filter df by
+
+    
+    Returns
+    -------
+    DataFrame: pd.DataFrame
+        Dataframe of iscorrect, subject, 
+        group and time
+
+    '''
+
+    subjects = get_subjects(task)
+    dfs = get_dfs(subjects,task)
+    dfs['t2'] = dfs['t2'].str.replace('B2024', 'B2024B')
+    return get_iscorrect_mean(dfs, condition)
+
+def get_iscorrect(dfs: pd.DataFrame) -> dict:
+    
+    '''
+    Function to loop through dfs and return subject, group 
+    and iscorrect.
+
+    Parameters
+    ----------
+    dfs: pd.DataFrame
+        DataFrame with T1 abd T2 dataframe paths
+
+    Returns
+    -------
+    values_df: dict
+        dictionary of iscorrect, subject
+        time point and group.
+    '''
+    
+    values_df = {
+        'iscorrect': [],
+        'subject': [],
+        'time_point': [],
+        'group': []
+    
+    }
+    
+    subject = 1
+    for row in dfs.iterrows(): 
+        try: 
+            df_t1 = load_df(row[1]['t1'])
+            df_t2 = load_df(row[1]['t2'])
+            df_t1['IsCorrect'] = df_t1['IsCorrect'].apply(lambda correct: 1 if correct=='Correct' else 0)
+            df_t2['IsCorrect'] = df_t2['IsCorrect'].apply(lambda correct: 1 if correct=='Correct' else 0)
+            values_df['iscorrect'].append(df_t1['IsCorrect'])
+            values_df['iscorrect'].append(df_t2['IsCorrect'])
+            values_df['subject'].append([str(subject)] * (len(df_t1['IsCorrect'])* 2))
+            if 'sub-G1' in row[1]['t1']:
+                values_df['group'].append(['HC'] * (len(df_t1['IsCorrect'])* 2))
+            else:
+                values_df['group'].append(['AN'] * (len(df_t1['IsCorrect'])* 2))
+            subject += 1
+            values_df['time_point'].append(['t1'] * len(df_t1['IsCorrect']))
+            values_df['time_point'].append(['t2'] * len(df_t2['IsCorrect']))
+        except Exception:
+            continue
+    return values_df
+
+def get_iscorrect_df(values_df: dict) -> pd.DataFrame:
+
+    '''
+    Function to converted dictionary of multiple lists
+    to DataFrame
+
+    Parameters
+    ----------
+    values_df: dict
+        dict of nested lists
+    
+    Returns
+    -------
+    DataFrame: pd.DataFrame
+        Dataframe of values in long form
+    '''
+    return pd.DataFrame(
+        {
+            'iscorrect': list(chain.from_iterable(values_df['iscorrect'])),
+            'sub': list(chain.from_iterable(values_df['subject'])),
+            'time': list(chain.from_iterable(values_df['time_point'])),
+            'group': list(chain.from_iterable(values_df['group'])),
+        }
+    )
+
+def iscorrect_all_values(task: str) -> pd.DataFrame:
+
+    '''
+    Function to get iscorrect values
+
+    Parameters
+    ----------
+    task: str
+        str of task
+    
+    Returns
+    -------
+    DataFrame: pd.DataFrame
+        Dataframe of iscorrect, subject, 
+        group and time
+
+    '''
+
+    subjects = get_subjects(task)
+    dfs = get_dfs(subjects,task)
+    dfs['t2'] = dfs['t2'].str.replace('B2024', 'B2024B')
+    values_df = get_iscorrect(dfs)
+    return get_iscorrect_df(values_df)
