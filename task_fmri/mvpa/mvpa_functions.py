@@ -72,7 +72,7 @@ def get_ados_df(group: str):
     
     return ados[ados['G-Number'].str.contains(group)].reset_index(drop=True)
     
-def get_image_paths(group: str, mean_images: bool =False) -> pd.DataFrame:
+def get_image_paths(group: str, test_train: str, mean_images: bool = False) -> pd.DataFrame:
     '''
     Function to get imaging paths
     
@@ -82,6 +82,8 @@ def get_image_paths(group: str, mean_images: bool =False) -> pd.DataFrame:
         str of either G1 for HC or G2 for AN
     mean_images: bool
         bool to get mean images from the three tasks (default false)
+    test_train: str
+        string object to decide if images are for testing or training
     
     Returns
     -------
@@ -92,8 +94,10 @@ def get_image_paths(group: str, mean_images: bool =False) -> pd.DataFrame:
     paths = glob.glob(os.path.join(config('eft'), '1stlevel', 'T1', f'sub-{group}*', 'ess_0004.nii'))
     
     if mean_images == True:
-        paths = glob.glob(os.path.join(config('ml'), 'mean_task_images',  f'sub-{group}*.nii.gz'))
-    
+        paths = glob.glob(os.path.join(config('ml'), 'mean_task_images', f'sub-{group}*.nii.gz'))
+        if test_train != None:
+            paths = glob.glob(os.path.join(config('ml'), 'mean_task_images', test_train ,f'sub-{group}*.nii.gz'))
+            
     return pd.DataFrame(
         data={
             'id': [re.findall(f'{group}...', participant)[0] for participant in paths],
@@ -126,7 +130,7 @@ def filter_ados_df(ados: pd.DataFrame, beta_images_paths: pd.DataFrame) -> pd.Da
         left=particpants_with_ados, 
         right=beta_images_paths, 
         left_on='G-Number', 
-        right_on='id'
+        right_on='id',
         ).drop('id', axis=1).sort_values(by='G-Number')
     
 def organising_df_into_long_form(ados_df: pd.DataFrame) -> pd.DataFrame:
@@ -154,7 +158,7 @@ def organising_df_into_long_form(ados_df: pd.DataFrame) -> pd.DataFrame:
                         axis=1
                         ).drop(['eft_paths', 'happy_paths', 'fear_paths'], axis=1).rename(columns={'value': 'paths'})
 
-def ados(group: str, mean_images: bool = False) -> pd.DataFrame:
+def ados(group: str, test_train: str, mean_images: bool = False) -> pd.DataFrame:
     
     '''
     Wrapper function to  load and filter ados and image paths
@@ -163,6 +167,8 @@ def ados(group: str, mean_images: bool = False) -> pd.DataFrame:
     ----------
     group: str
         str of either G1 for HC or G2 for AN
+    test_train: str
+        string object to decide if images are for testing or training
     mean_images: bool
         bool to get mean images from the three tasks (default false)
 
@@ -173,7 +179,7 @@ def ados(group: str, mean_images: bool = False) -> pd.DataFrame:
     '''
 
     ados_df = get_ados_df(group)
-    image_paths = get_image_paths(group, mean_images)
+    image_paths = get_image_paths(group, test_train, mean_images)
     filtered_df = filter_ados_df(ados_df, image_paths)
     if mean_images == True:
         return filtered_df.drop(['happy_paths', 'fear_paths'], axis=1).rename(columns={'eft_paths': 'paths'})

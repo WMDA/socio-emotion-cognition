@@ -15,11 +15,11 @@ if __name__ == "__main__":
            'ADOS_sterotyped_and_repetititve']].dropna()
     
     ados_an = ados[ados['G-Number'].str.contains('G1')].reset_index(drop=True)
-    paths = glob.glob(os.path.join(task_path, '1stlevel', 'T1', 'sub-G2*', 'ess_0004.nii'))
+    paths = glob.glob(os.path.join(task_path, '1stlevel', 'T1', 'sub-G1*', 'ess_0004.nii'))
     
     beta_images_paths = pd.DataFrame(
         data={
-            'id': [re.findall('G2...', participant)[0] for participant in paths],
+            'id': [re.findall('G1...', participant)[0] for participant in paths],
             'eft_paths': paths,
             'happy_paths': [re.sub('eft', 'happy', path) for path in paths],
             'fear_paths': [re.sub('eft', 'fear', path) for path in paths]
@@ -33,4 +33,4 @@ if __name__ == "__main__":
         happy = img.load_img(beta_images_paths['happy_paths'][img_path])
         fear = img.load_img(beta_images_paths['fear_paths'][img_path])
         mean_img = img.mean_img([eft, happy, fear])
-        mean_img.to_filename(f'{tv_l1_path}/pickle/combined/images/{sub}.nii.gz')
+        mean_img.to_filename(f'{tv_l1_path}/mean_task_images/{sub}.nii.gz')

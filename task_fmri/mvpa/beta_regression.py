@@ -69,7 +69,7 @@ def confounds(confounds_df: str) -> pd.DataFrame:
             ])
     return pd.DataFrame(data=regres)
 
-def save_beta_maps(beta_maps: dict, save_dir: str) - > None:
+def save_beta_maps(beta_maps: dict, save_dir: str) -> None:
 
     '''
     Function to save beta maps for each condition
