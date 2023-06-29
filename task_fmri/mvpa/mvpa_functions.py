@@ -4,6 +4,7 @@ import re
 import os
 import pandas as pd
 import glob
+import sys
 
 def save_pickle(name: str, object_to_pickle: object) -> None:
 
@@ -71,19 +72,18 @@ def get_ados_df(group: str):
            'ADOS_sterotyped_and_repetititve']].dropna()
     
     return ados[ados['G-Number'].str.contains(group)].reset_index(drop=True)
+
+def build_df(group: str, paths: list) -> dict:
     
-def get_image_paths(group: str, test_train: str, mean_images: bool = False) -> pd.DataFrame:
     '''
-    Function to get imaging paths
+    fucntion to build the df of image paramaters
     
     Parameters
     ----------
     group: str
-        str of either G1 for HC or G2 for AN
-    mean_images: bool
-        bool to get mean images from the three tasks (default false)
-    test_train: str
-        string object to decide if images are for testing or training
+        str of either G1 for HC or G2 for AN  
+    paths: list
+        list of paths to images
     
     Returns
     -------
@@ -91,13 +91,6 @@ def get_image_paths(group: str, test_train: str, mean_images: bool = False) -> p
        Dataframe of path to images
     '''
 
-    paths = glob.glob(os.path.join(config('eft'), '1stlevel', 'T1', f'sub-{group}*', 'ess_0004.nii'))
-    
-    if mean_images == True:
-        paths = glob.glob(os.path.join(config('ml'), 'mean_task_images', f'sub-{group}*.nii.gz'))
-        if test_train != None:
-            paths = glob.glob(os.path.join(config('ml'), 'mean_task_images', test_train ,f'sub-{group}*.nii.gz'))
-            
     return pd.DataFrame(
         data={
             'id': [re.findall(f'{group}...', participant)[0] for participant in paths],
@@ -107,6 +100,50 @@ def get_image_paths(group: str, test_train: str, mean_images: bool = False) -> p
             }
             ).sort_values(by='id')
 
+def get_image_paths(group: str, 
+                    test_train: str,
+                    directory: str,
+                    mean_images: bool = True) -> pd.DataFrame:
+    '''
+    Function to get imaging paths
+    
+    Parameters
+    ----------
+    group: str
+        str of either G1 for HC or G2 for AN    
+    test_train: str
+        string object to decide if images are for testing or training
+    directory: str
+        string of either eft, t1 or combined of where to get the images from
+    mean_images: bool
+        bool to get mean images from the three tasks (default True)
+
+    
+    Returns
+    -------
+    pd.DataFrame: Dataframe
+       Dataframe of path to images
+    '''
+
+    if directory == 'eft':    
+        paths = glob.glob(os.path.join(config('eft'), '1stlevel', 'T1', f'sub-{group}*', 'ess_0004.nii'))
+        return build_df(group, paths).drop(['happy_paths', 'fear_paths'], axis=1)
+    
+    if directory == 't1':
+        paths = glob.glob(os.path.join(config('ml'), 'mean_task_images', test_train, 't1', f'sub-{group}*.nii.gz'))
+        if 'G1' in group:
+            paths = glob.glob(os.path.join(config('ml'), 'mean_task_images', 'hc', f'sub-{group}*.nii.gz'))
+        return build_df(group, paths)
+    
+    if directory == 'combined':
+        paths = glob.glob(os.path.join(config('ml'), 'mean_task_images', test_train, 'combined', f'sub-{group}*.nii.gz'))
+        return build_df(group, paths)
+
+    if directory == 't2':
+        paths = glob.glob(os.path.join(config('ml'), 'mean_task_images', test_train, 't2', f'sub-{group}*.nii.gz'))
+        return build_df(group, paths)
+
+            
 def filter_ados_df(ados: pd.DataFrame, beta_images_paths: pd.DataFrame) -> pd.DataFrame:
     '''
     Functionto filter the ADOS and imaging paths to 
@@ -158,7 +195,27 @@ def organising_df_into_long_form(ados_df: pd.DataFrame) -> pd.DataFrame:
                         axis=1
                         ).drop(['eft_paths', 'happy_paths', 'fear_paths'], axis=1).rename(columns={'value': 'paths'})
 
-def ados(group: str, test_train: str, mean_images: bool = False) -> pd.DataFrame:
+def check_directory(directory: str) -> None:
+    '''
+    Function to check that directory input is correct
+    Exits with sys.exit(1) if not
+
+    Parameters
+    ----------
+    directory: str
+        string of either eft, t1 or combined of where to get the images from
+    Returns
+    -------
+    None
+    '''
+    values = ['eft', 't1', 't2' , 'combined']
+    if directory in values:
+            pass
+    else:
+        print('Invalid input, please enter either, eft, t1, t2 or combined')
+        sys.exit(1)
+
+def ados(group: str, test_train: str, directory: str, mean_images: bool = True) -> pd.DataFrame:
     
     '''
     Wrapper function to  load and filter ados and image paths
@@ -169,18 +226,22 @@ def ados(group: str, test_train: str, mean_images: bool = False) -> pd.DataFrame
         str of either G1 for HC or G2 for AN
     test_train: str
         string object to decide if images are for testing or training
+    directory: str
+        string of either eft, t1, t2 or combined of where to get the images from
     mean_images: bool
-        bool to get mean images from the three tasks (default false)
+        bool to get mean images from the three tasks (default True)
 
     Returns
     -------
     pd.DataFrame: DataFrame
         Dataframe in long form
     '''
-
+    check_directory(directory)
     ados_df = get_ados_df(group)
-    image_paths = get_image_paths(group, test_train, mean_images)
+    image_paths = get_image_paths(group, test_train, directory, mean_images)
     filtered_df = filter_ados_df(ados_df, image_paths)
+    if directory == 'eft':
+        return filtered_df
     if mean_images == True:
         return filtered_df.drop(['happy_paths', 'fear_paths'], axis=1).rename(columns={'eft_paths': 'paths'})
     return organising_df_into_long_form(filtered_df)

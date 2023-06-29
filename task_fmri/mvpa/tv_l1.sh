@@ -1,7 +1,7 @@
 #! /bin/bash
 
 #SBATCH --job-name=tv
-#SBATCH --output=/data/project/BEACONB/logs/tv.out
+#SBATCH --output=/data/project/BEACONB/logs/tv_t2.out
 #SBATCH --export=none
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=10G
