@@ -5,6 +5,9 @@ import os
 import pandas as pd
 import glob
 import sys
+from nilearn.maskers import NiftiSpheresMasker
+import nilearn
+import numpy as np
 
 def save_pickle(name: str, object_to_pickle: object) -> None:
 
@@ -245,3 +248,135 @@ def ados(group: str, test_train: str, directory: str, mean_images: bool = True) 
     if mean_images == True:
         return filtered_df.drop(['happy_paths', 'fear_paths'], axis=1).rename(columns={'eft_paths': 'paths'})
     return organising_df_into_long_form(filtered_df)
+
+def extract(coords, beta_img, t_score_img) -> pd.DataFrame:
+    
+    '''
+    Function to extract beta wieghts and t scores
+    from images at set co-ordinates
+
+    Parameters
+    ----------
+    coords: tuple,
+        tuple of X, Y, Z MNI co-ordinates
+    beta_img: image,
+        image of beta weights
+    t_score: image,
+        image of tscores
+    
+    Returns
+    -------
+    pd.DataFrame: DataFrame
+        DataFrame of beta and t scores
+    '''
+    
+    masker = NiftiSpheresMasker(
+        (coords.values),
+    )
+    betas_frem = masker.fit_transform(beta_img)
+    tscore_frem = masker.fit_transform(t_score_img)
+    return pd.DataFrame({'beta': betas_frem.ravel(), 't_score': tscore_frem.ravel()})
+
+def fetch_atlas(atlas: str) -> dict:
+    '''
+    Function to get atlas BUNCH
+
+    Parameters
+    ----------
+    atlas: str
+        str of ho for harvard_oxford or aal for aal
+    '''
+    
+    if atlas == 'ho':
+        return nilearn.datasets.fetch_atlas_harvard_oxford('cort-maxprob-thr25-2mm')
+    if atlas == 'aal':
+        return nilearn.datasets.fetch_atlas_aal()
+    
+def labels(coords: tuple, atlas_img: str, labels: list, atlas='ho', aal_index=False ) -> pd.DataFrame:
+
+    '''
+    Function to get brain region based on atlases
+
+    Parameters
+    ----------
+    coords: list,
+        list of coords
+    atlas_img: str  
+        str to atlas atlas image
+    labels: list
+        list to
+
+    Returns
+    -------
+    pd.Series: Series 
+        Series of labels
+        
+    '''
+    
+    get_labels = NiftiSpheresMasker((coords.values)).fit_transform(atlas_img).ravel()
+    if atlas == 'ho':
+        return pd.Series([labels[int(ind)] for ind in np.nditer(get_labels)])
+    if atlas == 'aal':
+        aal_labels = []
+        for ind in np.nditer(get_labels):
+            try:
+                aal_labels.append(labels[aal_index.index(str(int(ind)))])
+            except Exception:
+                aal_labels.append('no label')
+        return pd.Series(aal_labels)
+
+def left_or_right(x) -> str:
+
+    '''
+    Function to decide if brain region is left or right
+    depending on x co-ordinate
+
+    Parameters
+    ----------
+    x: float
+        x co-ordinate
+    
+    Returns
+    -------
+    str: string
+        str of left or right
+    
+    '''
+    if x < 0:
+        return 'Left '
+    else:
+        return 'Right '
+
+def predictors_df(df, coords) -> pd.DataFrame:
+
+    '''
+    Function to get labels for predictors df
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        DataFrame of x, y, z mni co-ordinates
+        and betas
+    coords: list
+        list of co-ordinates
+    
+    Returns
+    -------
+    df: pd.DataFrame
+        DataFrame of predictors with labels organised 
+        by beta weights
+    '''
+    havard_atlas = fetch_atlas('ho')
+    aal_atlas = fetch_atlas('aal')
+    havard_labels = labels(coords, havard_atlas['filename'], havard_atlas['labels'])
+    aal_labels = labels(coords, 
+                             aal_atlas['maps'], 
+                             aal_atlas['labels'], 
+                             atlas='aal', 
+                             aal_index=aal_atlas['indices'])
+    df['label'] = havard_labels
+    df['label'] = df.apply(lambda x : left_or_right(x.X) + x.label, axis=1)
+    df['label_aal'] = aal_labels    
+    df['label'] = df['label'].apply(lambda val: np.nan if 'Background' in val else val)
+    df['labels'] = df['label'].fillna(df['label_aal'])
+    return df.drop(['label', 'label_aal'], axis=1).sort_values(by=['beta'])

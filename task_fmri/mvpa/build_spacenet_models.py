@@ -11,7 +11,7 @@ if __name__ == "__main__":
     print('\nBuilding TV-l1 models')
     print('\nReading ADOS results')
     
-    ados_df = ados('G2', test_train='train', directory='t2')
+    ados_df = ados('G2', test_train='train', directory='combined')
     ados_df = ados_df.drop([20]) # Remove the one outlier
     for domain in ados_df.columns[1:6]:
         print(f'\nWorking on {domain}')
@@ -22,7 +22,7 @@ if __name__ == "__main__":
         tv_l1.fit(ados_df['paths'], ados_df[domain])
         try:
             print('\nSaving output')
-            save_pickle(os.path.join(tv_l1_path, 'pickle', 'test_train_cv_10', 't2', domain), tv_l1)
+            save_pickle(os.path.join(tv_l1_path, 'pickle', 'test_train_cv_10', 'combined', domain), tv_l1)
         except Exception as e:
             print(e)
             sys.exit(1)
