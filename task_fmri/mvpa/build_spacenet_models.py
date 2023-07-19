@@ -2,6 +2,7 @@ from decouple import config
 import os
 import sys
 from nilearn.decoding import SpaceNetRegressor
+from sklearn.model_selection import GridSearchCV
 from mvpa_functions import save_pickle, ados
 import numpy as np
 
@@ -13,17 +14,20 @@ if __name__ == "__main__":
     
     ados_df = ados('G2', test_train='train', directory='combined')
     ados_df = ados_df.drop([20]) # Remove the one outlier
+    models = {}
     for domain in ados_df.columns[1:6]:
         print(f'\nWorking on {domain}')
         tv_l1 = SpaceNetRegressor(penalty="tv-l1", 
-                                  eps=0.1,
+                                  l1_ratios=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
                                   n_jobs=8,
                                   cv=10)
-        tv_l1.fit(ados_df['paths'], ados_df[domain])
-        try:
-            print('\nSaving output')
-            save_pickle(os.path.join(tv_l1_path, 'pickle', 'test_train_cv_10', 'combined', domain), tv_l1)
-        except Exception as e:
-            print(e)
-            sys.exit(1)
+        tv_l1_eps = GridSearchCV(tv_l1, {'eps': [1e-3, 1e-2, 1e-1]})
+        tv_l1_eps.fit(ados_df['paths'], ados_df[domain])
+        models[domain] = tv_l1_eps
+    try:
+        print('\nSaving output')
+        save_pickle(os.path.join(tv_l1_path, 'spacenet_best_estimator', 'spacenet_models'), models)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
     print('\nFinished calculating spacenet models')

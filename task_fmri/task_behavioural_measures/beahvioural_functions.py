@@ -434,8 +434,10 @@ def get_iscorrect_mean(dfs: pd.DataFrame, condition: str) -> pd.DataFrame:
                 df_t1['IsCorrect'] = df_t1['IsCorrect'].apply(lambda correct: 1 if correct=='Correct' else 0)
                 df_t2['IsCorrect'] = df_t2['IsCorrect'].apply(lambda correct: 1 if correct=='Correct' else 0)
             
-            values_df['iscorrect'].append(df_t1['IsCorrect'].mean())
-            values_df['iscorrect'].append(df_t2['IsCorrect'].mean())
+            df_t1_percentage = (df_t1['IsCorrect'].sum() / df_t1['IsCorrect'].shape[0]) * 100
+            df_t2_percentage = (df_t2['IsCorrect'].sum() /df_t2['IsCorrect'].shape[0]) * 100
+            values_df['iscorrect'].append(df_t1_percentage)
+            values_df['iscorrect'].append(df_t2_percentage)
             values_df['subject'].append(subject)
             values_df['subject'].append(subject)
             subject += 1

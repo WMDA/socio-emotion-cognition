@@ -17,11 +17,12 @@ if __name__ == "__main__":
     ados_df = ados_df.drop([20]) # Remove the one outlier
     for domain in ados_df.columns[1:6]:
         print(f'\nWorking on {domain}')
-        frem = FREMRegressor(estimator=SVR(kernel='linear'), n_jobs=8)
+        frem = FREMRegressor(estimator=SVR(kernel='linear'), n_jobs=8, cv=50,
+                             param_grid={'C': [1e0, 1e1, 1e2], 'epsilon': [1e-3, 1e-2, 1e-1]})
         frem.fit(ados_df['paths'], ados_df[domain])
         try:
             print('\nSaving output')
-            save_pickle(os.path.join(frem_path, 'frem', domain), frem)
+            save_pickle(os.path.join(frem_path, 'frem_best_estimator', domain), frem)
         except Exception as e:
             print(e)
             sys.exit(1)
