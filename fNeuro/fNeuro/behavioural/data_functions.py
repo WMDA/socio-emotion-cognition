@@ -5,6 +5,7 @@ from base64 import b64decode
 import os
 import re
 import pickle
+from fNeuro.second_level.second_level_functions import bayes_factor_upper_bound
 
 
 def load_enviornment(datapath: str) -> str:
@@ -249,3 +250,22 @@ def long_form_df(df: pd.DataFrame, vars_1: str, vars_2: str, value: str) -> pd.D
     long_df['time_point'] = long_df['time_point'].apply(lambda time: 't1' if vars_1 in time else 't2')
     
     return long_df
+
+
+def summary_results(model) -> pd.DataFrame:
+    '''
+    Function to add on BFB and null hypothesis probabilty.
+    
+    Parameters
+    ----------
+    model: statsmodels.regression.mixed_linear_model.MixedLMResultsWrapper
+        fitted lmm model
+    
+    df: pd.DataFrame
+        Dataframe of results
+    '''
+    df = model.summary()
+    df.tables[1]['BFB'] = model.pvalues.apply(lambda p: bayes_factor_upper_bound((p))['BFB'])
+    df.tables[1]['null %'] = model.pvalues.apply(lambda p: bayes_factor_upper_bound((p))['null_hypothesis_probabilty'])
+    return df
+    
