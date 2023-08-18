@@ -2,7 +2,7 @@ from decouple import config
 import os
 import sys
 from nilearn.decoding import FREMRegressor
-from mvpa_functions import save_pickle, ados
+from fNeuro.MVPA.mvpa_functions import save_pickle, ados
 from sklearn.svm import SVR 
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)

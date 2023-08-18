@@ -3,7 +3,7 @@ import os
 import sys
 from nilearn.decoding import SpaceNetRegressor
 from sklearn.model_selection import GridSearchCV
-from mvpa_functions import save_pickle, ados
+from fNeuro.MVPA.mvpa_functions import save_pickle, ados
 import numpy as np
 
 if __name__ == "__main__":
@@ -21,9 +21,8 @@ if __name__ == "__main__":
                                   l1_ratios=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
                                   n_jobs=8,
                                   cv=10)
-        tv_l1_eps = GridSearchCV(tv_l1, {'eps': [1e-3, 1e-2, 1e-1]})
-        tv_l1_eps.fit(ados_df['paths'], ados_df[domain])
-        models[domain] = tv_l1_eps
+        tv_l1.fit(ados_df['paths'], ados_df[domain])
+        models[domain] = tv_l1
     try:
         print('\nSaving output')
         save_pickle(os.path.join(tv_l1_path, 'spacenet_best_estimator', 'spacenet_models'), models)

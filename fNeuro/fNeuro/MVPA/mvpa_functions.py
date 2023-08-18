@@ -8,6 +8,7 @@ import sys
 from nilearn.maskers import NiftiSpheresMasker
 import nilearn
 import numpy as np
+from fNeuro.second_level.second_level_functions import bayesian_cluster_info
 
 def save_pickle(name: str, object_to_pickle: object) -> None:
 
@@ -380,3 +381,23 @@ def predictors_df(df, coords) -> pd.DataFrame:
     df['label'] = df['label'].apply(lambda val: np.nan if 'Background' in val else val)
     df['labels'] = df['label'].fillna(df['label_aal'])
     return df.drop(['label', 'label_aal'], axis=1).sort_values(by=['beta'])
+
+def load_mvpa_predictors(csv_name: str) -> pd.DataFrame:
+
+    '''
+    Function to load MVPA predictors. Returns csv
+  
+
+    Parameters
+    ---------
+    path: str
+        absolute path to csv
+
+    Returns
+    -------
+    pd.DataFrame of cluster csv
+    '''
+    df = pd.read_csv(csv_name)
+    cols = ['Cluster ID', 'X', 'Y', 'Z', 'Cluster Size (mm3)', 'beta', 'pval', 'BFB', 'odds', 'null_proability' ,'labels']
+    df =  bayesian_cluster_info(df)
+    return df[cols]

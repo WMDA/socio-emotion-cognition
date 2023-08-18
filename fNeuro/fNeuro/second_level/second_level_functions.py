@@ -652,3 +652,17 @@ def load_cluster_csv(path: str, csv_name: str) -> pd.DataFrame:
         return df[cols]
     except Exception:
         print('No Significant Clusters')
+
+def decimal_to_odds(probability: float) -> float:
+    
+    """
+    Converts a decimal probability to odds.    
+    Parameters
+    ----------
+    probability: float 
+        The decimal probability.    
+    Returns:
+      odds: float.
+    """
+    
+    return probability / (1 - probability)

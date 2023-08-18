@@ -4,7 +4,7 @@ import glob
 import os
 import re
 from nilearn import image as img
-from mvpa_functions import ados
+from fNeuro.MVPA.mvpa_functions import ados
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from decouple import config
 import os
 import numpy as np
-import second_level_functions as slf
+import fNeuro.second_level.second_level_functions as slf
 import warnings
 warnings.filterwarnings(action='ignore', category=UserWarning) #Filterout all the nilearn user warnings
 
