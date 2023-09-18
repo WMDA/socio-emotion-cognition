@@ -3,6 +3,8 @@
 .1st*
 .vscode
 .repeat_fmri
+ignore*
+nilearn_cache
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
