@@ -1,0 +1,19 @@
+#! /bin/bash
+
+root=/data/project/BEACONB/CNSCNSD/bids_t2
+cd $root
+
+folders=$(ls | grep sub) 
+
+for folder in $folders
+do
+cd ${folder}/func
+mv ${folder}_task-rest_run-01_bold.nii.gz ${folder}_task-rest_echo-1_bold.nii.gz
+mv ${folder}_task-rest_run-02_bold.nii.gz ${folder}_task-rest_echo-2_bold.nii.gz
+mv ${folder}_task-rest_run-03_bold.nii.gz ${folder}_task-rest_echo-3_bold.nii.gz
+
+mv ${folder}_task-rest_run-01_bold.json ${folder}_task-rest_echo-1_bold.json
+mv ${folder}_task-rest_run-02_bold.json ${folder}_task-rest_echo-2_bold.json
+mv ${folder}_task-rest_run-03_bold.json ${folder}_task-rest_echo-3_bold.json
+cd $root
+done
