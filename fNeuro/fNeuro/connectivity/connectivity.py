@@ -1,7 +1,6 @@
 import numpy as np
 import cyclicityanalysis.orientedarea as cao
 import pandas as pd
-from math import sqrt
 
 class Cyclic_analysis:
     def __init__(self, to_vectorize=True) -> None:
@@ -20,14 +19,31 @@ class Cyclic_analysis:
         '''
         self.to_vectorize = to_vectorize
 
-    def vectorize(self, symmetric: np.array) -> np.array:
+    def remove_diagonals(self, array) -> np.array:
+        '''
+        Function to remove Diagnoals. Does this when
+        array is vectorised
+
+        Parameters
+        ---------
+        array: np.array
+            2D matrix
+
+        Returns
+        -------
+        np.array: array
+            2D matrix 
+        '''
+        return array[~np.eye(len(array), dtype=bool)].reshape(len(array), -1) 
+
+    def vectorize(self, array: np.array) -> np.array:
         '''
         Nilearn's vectorize to return the lower triangluation of a matrix
         in 1D format.
     
         Parameters
         ----------
-        symmetric: np.array 
+        array: np.array 
             Correlation matrix
         
         Returns
@@ -35,10 +51,8 @@ class Cyclic_analysis:
         np.array: 1D numpy array
             array of lower triangluation of a matrix
         '''
-        scaling = np.ones(symmetric.shape[-2:])
-        np.fill_diagonal(scaling, sqrt(2.0))
-        tril_mask = np.tril(np.ones(symmetric.shape[-2:])).astype(bool)
-        return symmetric[..., tril_mask] / scaling[tril_mask]
+        symmetric = self.remove_diagonals(array)
+        return symmetric[np.tril(symmetric, -1).astype(bool)]
 
     def cyclic_analysis(self, time_series: np.array) -> np.array:
 
@@ -76,8 +90,10 @@ class Cyclic_analysis:
         
         Returns
         -------
-        np.array: 1D numpy array
+        np.array: array 
+            either a  1D numpy array
             array of lower triangluation of a matrix
+            OR 2D matrix
         '''
         
         return np.array(list(map(self.cyclic_analysis, time_series)))
