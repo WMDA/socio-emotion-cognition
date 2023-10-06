@@ -3,7 +3,7 @@ import os
 import sys
 from nilearn.decoding import SpaceNetRegressor
 from sklearn.model_selection import GridSearchCV
-from fNeuro.MVPA.mvpa_functions import save_pickle, ados
+from fNeuro.ml.mvpa_functions import save_pickle, ados
 import numpy as np
 
 if __name__ == "__main__":

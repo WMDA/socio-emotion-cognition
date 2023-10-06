@@ -1,5 +1,5 @@
 import pandas as pd
-from fNeuro.MVPA.mvpa_functions import ados,get_ados_df
+from fNeuro.ml.mvpa_functions import ados,get_ados_df
 from decouple import config
 import os
 import re
