@@ -1,1 +1,0 @@
-from fNeuro.bayesian import *
