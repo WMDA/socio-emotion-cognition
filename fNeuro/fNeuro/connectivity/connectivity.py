@@ -97,3 +97,69 @@ class Cyclic_analysis:
         '''
         
         return np.array(list(map(self.cyclic_analysis, time_series)))
+    
+def adj_matrix(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    
+    '''
+    Function to create an Adjacency matrix
+    needed for plotting
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Dataframe of values
+
+    column: str
+        str of column of value to use in 
+        adj matrix
+    
+    Returns
+    ------
+    adj_matrix: pd.DataFrame
+        Adjacency matrix
+    '''
+    
+    adj = pd.DataFrame(data={
+        df['correlation_names'].values[0].split('-')[0].rstrip(): df[column],
+        df['correlation_names'].values[0].split('-')[1].rstrip().lstrip(): df[column]
+    })
+    
+    adj_matrix = pd.DataFrame(np.zeros((adj.shape[1], adj.shape[1])), 
+                              columns=adj.columns, index=adj.columns)
+    adj_matrix.iloc[0,1] = df[column]
+    adj_matrix.iloc[1,0] = df[column]
+    return adj_matrix
+
+def connectome_plotting(df: pd.DataFrame, column: str, labels: pd.DataFrame ) -> dict:
+    
+    '''
+    
+    Function to get adj matrix and 
+    co-ordinates needed for plotting
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Dataframe of values
+
+    column: str
+        str of column of value to use in 
+        adj matrix
+    
+    labels: pd.Dataframe
+        Dataframe with co-ordinates of 
+        regions
+    
+    Returns
+    -------
+    dict: dictionary object
+        dict with adj matrix and 
+        co-ordinates for plotting
+    '''
+    adj = adj_matrix(df, column)
+    coords = (labels[labels['labels'].str.contains(adj.columns[0])]['region_coords'].reset_index(drop=True)[0],
+          labels[labels['labels'].str.contains(adj.columns[1])]['region_coords'].reset_index(drop=True)[0])
+    return {
+        'adj': adj,
+        'coords': coords
+        }
