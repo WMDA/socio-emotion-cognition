@@ -1,6 +1,7 @@
 import numpy as np
 
 def z_score_to_bayes_factor(zscore):
+    
     '''
     Function to convert z scores to 
     bayes factors
